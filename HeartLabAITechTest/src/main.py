@@ -11,15 +11,15 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 
 import model
-import preprocessing_tests
+
 from tensorflow.keras.utils import to_categorical 
-print("progress")
+
 # importing testing files 
-sys.path.insert(1,'../tests')
+sys.path.insert(1,'tests')
 print(sys.path)
 
-#import preprocessing_tests
-
+import preprocessing_tests
+import model_tests
 
 # Config and Inits
 data_dir = "chest_xray"
@@ -144,6 +144,28 @@ def train_val_test_split(dataset, train_prop=0.7, val_prop=0.15, test_prop=0.15)
     
     return(train_set, val_set, test_set)
 
+def distribution_plot(train_set, val_set, test_set, distribution_plot = "evaluation_results/distribution_plot.png"):
+    n = 3
+    bar1 = (get_counts(train_set)[0], get_counts(val_set)[0], get_counts(test_set)[0])
+    bar2 = (get_counts(train_set)[1], get_counts(val_set)[1], get_counts(test_set)[1])
+    bar3 = (get_counts(train_set)[2], get_counts(val_set)[2], get_counts(test_set)[2])
+
+    ind = np.arange(n)
+    plt.figure(figsize=(10,5))
+    width = 0.3 
+    plt.bar(ind, bar1 , width, label='Normal')
+    plt.bar(ind + width, bar2, width, label='Bacterial')
+    plt.bar(ind + width*2, bar3, width, label='Viral')
+
+    plt.xlabel('Set types')
+    plt.ylabel('Class frequency count')
+    plt.title('Class frequency count in each set')
+
+    plt.xticks(ind + width / 2, ('Train set', 'Validation set', 'Test set'))
+
+    plt.legend(loc='best')
+    plt.savefig(distribution_plot)
+
 
 def X_y_split(data):
     """
@@ -167,29 +189,51 @@ def X_y_split(data):
     return X, y_cat
 
 
+
+
 def main():
 
     # get dataset
     dataset = create_datasets(data_dir)
     # get train, val, test split
     train_set, val_set, test_set = train_val_test_split(dataset)
+    
+    # completing distribution test
+    print(preprocessing_tests.distribution(dataset, train_set, val_set, test_set))
+
+    # distribution plot to check if class distribution is skewed
+    distribution_plot(train_set, val_set, test_set)
+    
     # split data and labels, preprocess it
     X_train, y_cat_train = X_y_split(train_set)
     X_val, y_cat_val = X_y_split(val_set)
     X_test, y_cat_test = X_y_split(test_set)
+    
+    # completing normalisation test
+    for i in list(map(preprocessing_tests.normalisation, [X_train, X_test, X_val])):
+        print(i)
+    # completing dimension test
+    for i in list(map(preprocessing_tests.dimension, [(X_train, y_cat_train), (X_test, y_cat_test), (X_val, y_cat_val)])):
+        print(i)
 
     # calling a model
     cnn_model = model.cnn_model()
     print(cnn_model.summary())
 
-    print(X_train.shape)
-
     # training the model
-    trained_model = model.train_model(cnn_model, X_train, y_cat_train, X_val, y_cat_val, patience=3, epochs=3)  
+    trained_model = model.train_model(cnn_model, X_train, y_cat_train, X_val, y_cat_val)  
+    
     # saving the model 
     trained_model.save('saved_model/cnn_model')
+    
+    # retrieving stored model
+    # trained_model = tf.keras.models.load_model('saved_model/cnn_model')
+
     # evaluating the model
-    model.evaluate_model(trained_model,X_test,y_cat_test,test_set)
+    model.evaluate_model(trained_model,X_test,y_cat_test,test_set,loaded_model=True)
+
+    # completing test to check whether model can handle noise
+    print(model_tests.noise_rotation_test(X_test, y_cat_test, test_set, trained_model))
 
 
 if __name__ == "__main__":

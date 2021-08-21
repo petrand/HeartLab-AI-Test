@@ -37,7 +37,7 @@ def cnn_model(loss='categorical_crossentropy', opt='adam'):
     model.add(MaxPool2D(pool_size=(2, 2)))
     model.add(Dropout(0.3))
 
-    # Flatten images from 58 by 58 to 430592 list before final layer
+    # Flatten images from 29 by 29 to 107648 list before final layer
     model.add(Flatten())
 
     # 256 Neurons in dense Layer
@@ -55,18 +55,45 @@ def cnn_model(loss='categorical_crossentropy', opt='adam'):
 
 
 
-def train_model(model, X_train, y_cat_train, X_val, y_cat_val, patience=3, epochs=5):
+def train_model(model, X_train, y_cat_train, X_val, y_cat_val, patience=3, epochs=7):
+    """
+    Function trains the CNN model with early stopping. The model will be trained
+    over several epochs, which will be validated using validation sets. 
+    Inputs:
+        - model = model object returned by cnn_model function
+        - X_train, y_cat_train = train features and labels
+        - X_val, y_cat_val = validation features and labels
+        - patience = how many epochs will the model wait before stopping training if no significant improvement is achieved
+        - epochs = how many epochs will the model train for
+    Output:
+        - model = returns trained model object
+    """
     early_stop = EarlyStopping(monitor='val_loss',patience=patience)
     model.fit(X_train,y_cat_train,epochs=epochs,validation_data=(X_val,y_cat_val),callbacks=[early_stop])
     return model
 
-def evaluate_model(model, X_test, y_cat_test, test_set, accuracy_plot = "evaluation_results/accuracy_plot.png", loss_plot="evaluation_results/loss_plot.png", class_report = "evaluation_results/classification_report.txt", conf_matrix ="evaluation_results/confusion_matrix.png"):
+def evaluate_model(model, X_test, y_cat_test, test_set, loaded_model=False, accuracy_plot = "evaluation_results/accuracy_plot.png", loss_plot="evaluation_results/loss_plot.png", class_report = "evaluation_results/classification_report.txt", conf_matrix ="evaluation_results/confusion_matrix.png"):
+    """
+    Function evaluates the model by showing training metrics and validation accuracy. 
+    The model the predicts test set labels and is evaluated using classification report
+    and confusion matrix against unseen test set. 
+    Inputs: 
+        - model = model object returned by cnn_model function
+        - X_test, y_cat_test = test features and labels 
+        - test_set = test set prior to X y split
+        - loaded_model = if the model was loaded from saved file, you cant see history, hence it is disabled
+        - accuracy_plot = location to store accuracy plot
+        - loss_plot = location to store loss plot
+        - classification_report = file location to store classification report
+        - confusion_matrix = location to store confusion_matrix
+    """
 
-    losses = pd.DataFrame(model.history.history)
-    losses[['accuracy','val_accuracy']].plot()
-    plt.savefig(accuracy_plot)
-    losses[['loss','val_loss']].plot()
-    plt.savefig(loss_plot)
+    if loaded_model == False:
+        losses = pd.DataFrame(model.history.history)
+        losses[['accuracy','val_accuracy']].plot()
+        plt.savefig(accuracy_plot)
+        losses[['loss','val_loss']].plot()
+        plt.savefig(loss_plot)
 
     y_test = np.array([i[1] for i in test_set])
     
@@ -76,8 +103,6 @@ def evaluate_model(model, X_test, y_cat_test, test_set, accuracy_plot = "evaluat
     with open(class_report, 'w') as f:
         print(classification_report(y_test,predictions))
         f.write(classification_report(y_test,predictions))
-
-    
 
     plt.figure(figsize=(10,6))
     sns.heatmap(confusion_matrix(y_test,predictions),annot=True)
