@@ -221,13 +221,13 @@ def main():
     print(cnn_model.summary())
 
     # training the model
-    trained_model = model.train_model(cnn_model, X_train, y_cat_train, X_val, y_cat_val)  
+    #trained_model = model.train_model(cnn_model, X_train, y_cat_train, X_val, y_cat_val)  
     
     # saving the model 
-    trained_model.save('saved_model/cnn_model')
+    #trained_model.save('saved_model/cnn_model')
     
     # retrieving stored model
-    # trained_model = tf.keras.models.load_model('saved_model/cnn_model')
+    trained_model = tf.keras.models.load_model('saved_model/cnn_model')
 
     # evaluating the model
     model.evaluate_model(trained_model,X_test,y_cat_test,test_set,loaded_model=True)

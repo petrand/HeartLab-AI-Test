@@ -6,7 +6,7 @@ from sklearn.metrics import classification_report,confusion_matrix
 
 def noise_rotation_test(X_test, y_cat_test, test_set, model, class_report = "evaluation_results/noisy_classification_report.txt"):
 
-    image_gen = ImageDataGenerator(rotation_range=10, # rotate the image 20 degrees
+    image_gen = ImageDataGenerator(rotation_range=10, # rotate the image 10 degrees
                                     width_shift_range=0.05, # Shift the pic width by a max of 2.5%
                                     height_shift_range=0.05, # Shift the pic height by a max of 2.5%
                                     rescale=1, # Rescale the image by normalzing it.

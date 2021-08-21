@@ -21,3 +21,4 @@ def dimension(set_pair):
     assert (len(X.shape)==4), "FAILED TEST: Missing color vector"
     assert (X.shape[0] > 0) and (X.shape[1] == 256) and (X.shape[2] == 256) and (X.shape[3] == 1), "FAILED TEST: Incorrect vector dimensions or empty vector"
     return "PASSED TEST: Dimension"
+
